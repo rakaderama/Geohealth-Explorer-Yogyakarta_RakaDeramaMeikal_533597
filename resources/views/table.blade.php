@@ -79,7 +79,7 @@
         <div class="card mt-4">
 
             <div class="card-header">
-                <h3 class="mb-0">Tabel Data Point</h3>
+                <h3 class="mb-0">Tabel Data Titik</h3>
             </div>
 
             <div class="card-body">
