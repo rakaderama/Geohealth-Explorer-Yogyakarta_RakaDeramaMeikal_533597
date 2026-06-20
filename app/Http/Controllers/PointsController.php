@@ -59,16 +59,17 @@ class PointsController extends Controller
             ]
         );
 
-        // Create directory if not exists
-        if (!is_dir('storage/images')) {
-            mkdir('./storage/images', 0777);
+        // Create directory in public storage if not exists
+        $publicImagePath = public_path('storage/images');
+        if (!is_dir($publicImagePath)) {
+            mkdir($publicImagePath, 0777, true);
         }
 
-        // Get image from request
+        // Get image from request and move to public/storage/images
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $name_image = time() . "_point." . strtolower($image->getClientOriginalExtension());
-            $image->move('storage/images', $name_image);
+            $image->move($publicImagePath, $name_image);
         } else {
             $name_image = null;
         }
@@ -141,27 +142,29 @@ class PointsController extends Controller
             ]
         );
 
-        // Create directory if not exists
-        if (!is_dir('storage/images')) {
-            mkdir('./storage/images', 0777);
+        // Create directory in public storage if not exists
+        $publicImagePath = public_path('storage/images');
+        if (!is_dir($publicImagePath)) {
+            mkdir($publicImagePath, 0777, true);
         }
 
         $image_old = $this->points->find($id)->image;
 
-        // Get image from request
+        // Get image from request; if new image uploaded, move and delete old image
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $name_image = time() . "_point." . strtolower($image->getClientOriginalExtension());
-            $image->move('storage/images', $name_image);
+            $image->move($publicImagePath, $name_image);
+
+            // delete old image if exists
+            if ($image_old != null) {
+                $oldPath = public_path('storage/images/' . $image_old);
+                if (File::exists($oldPath)) {
+                    File::delete($oldPath);
+                }
+            }
         } else {
             $name_image = $image_old; // tetap gunakan gambar lama jika tidak ada gambar baru yang diunggah
-        }
-
-        if ($image_old != null) {
-            $filepath = public_path('storage/images/' . $image_old);
-            if (File_exists('./storage/images/' . $image_old)) {
-                unlink('./storage/images/' . $image_old); // hapus file gambar lama jika ada gambar baru yang diunggah
-            }
         }
 
         $data = [

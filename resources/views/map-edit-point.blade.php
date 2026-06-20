@@ -87,10 +87,10 @@
 
     <script>
         // Inisialisasi peta
-        var map = L.map('map').setView([-7.7956, 110.3695], 10);
+        var map = L.map('map').setView([-7.7956, 110.3695], 12);
 
         // Basemap OSM
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
@@ -132,8 +132,10 @@
                 $('#preview-image').attr('src', "{{ asset('storage/images') }}/" + properties.image);
 
 
-                //menampilkan modal edit
-                $('#modalEdit').modal('show');
+                //menampilkan modal edit (Bootstrap 5)
+                var modalEl = document.getElementById('modalEdit');
+                var modal = new bootstrap.Modal(modalEl);
+                modal.show();
             });
         });
 
@@ -143,7 +145,7 @@
         );
 
         var baseMaps = {
-            "OpenStreetMap": map._layers[Object.keys(map._layers)[0]],
+            "OpenStreetMap": osm,
             "Satellite": satellite
         };
 
@@ -169,8 +171,10 @@
                         .image);
 
 
-                        //menampilkan modal edit
-                        $('#modalEdit').modal('show');
+                        //menampilkan modal edit (Bootstrap 5)
+                        var modalEl2 = document.getElementById('modalEdit');
+                        var modal2 = new bootstrap.Modal(modalEl2);
+                        modal2.show();
                     }
                 );
             }

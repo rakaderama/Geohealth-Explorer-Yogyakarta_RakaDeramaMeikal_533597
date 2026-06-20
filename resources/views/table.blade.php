@@ -46,7 +46,7 @@
         }
 
         .card-header {
-            background: #0d6efd;
+            background: linear-gradient(90deg,#0d6efd 0%, #6c63ff 100%);
             color: white;
             font-weight: 600;
             border-radius: 12px 12px 0 0;
@@ -79,7 +79,7 @@
         <div class="card mt-4">
 
             <div class="card-header">
-                <h3 class="mb-0">Tabel Data Titik</h3>
+                <h3 class="mb-0">Daftar Rumah Sakit</h3>
             </div>
 
             <div class="card-body">
@@ -103,10 +103,10 @@
                         @foreach ($points as $p)
                             <tr>
                                 <td>{{ $no++ }}</td>
-                                <td>{{ $p['name'] }}</td>
+                                <td><a href="{{ route('peta') }}?focus={{ $p['id'] }}">{{ $p['name'] }}</a></td>
                                 <td>{{ $p['description'] }}</td>
                                 <td>
-                                    <img src='{{ asset('storage/images/') . '/' . $p['image'] }}' alt='' width='300px;'>
+                                    <img src="{{ $p['image'] ? asset('storage/images/' . $p['image']) : 'https://via.placeholder.com/200x120?text=No+Image' }}" alt="" class="img-fluid rounded" style="max-width:200px;" />
                                 </td>
                                 <td>{{ $p['created_at'] }}</td>
                             </tr>
@@ -117,91 +117,6 @@
 
             </div>
         </div>
-
-        <div class="card mt-4">
-
-            <div class="card-header">
-                <h3 class="mb-0">Tabel Data Polyline</h3>
-            </div>
-
-            <div class="card-body">
-
-                <table class="table table-bordered table-striped table-hover align-middle" id="tabledatapolylines">
-
-                    <thead>
-                        <tr>
-                            <th style="width:60px;">No</th>
-                            <th>Nama</th>
-                            <th>Deskripsi</th>
-                            <th>Foto</th>
-                            <th>Tanggal Dibuat</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @php
-                            $no = 1;
-                        @endphp
-                        @foreach ($polylines as $p)
-                            <tr>
-                                <td>{{ $no++ }}</td>
-                                <td>{{ $p['name'] }}</td>
-                                <td>{{ $p['description'] }}</td>
-                                <td>
-                                    <img src='{{ asset('storage/images/') . '/' . $p['image'] }}' alt='' width='300px;'>
-                                </td>
-                                <td>{{ $p['created_at'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-
-                </table>
-
-            </div>
-        </div>
-
-        <div class="card mt-4">
-
-            <div class="card-header">
-                <h3 class="mb-0">Tabel Data Polygon</h3>
-            </div>
-
-            <div class="card-body">
-
-                <table class="table table-bordered table-striped table-hover align-middle" id="tabledatapolygons">
-
-                    <thead>
-                        <tr>
-                            <th style="width:60px;">No</th>
-                            <th>Nama</th>
-                            <th>Deskripsi</th>
-                            <th>Foto</th>
-                            <th>Tanggal Dibuat</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @php
-                            $no = 1;
-                        @endphp
-                        @foreach ($polygons as $p)
-                            <tr>
-                                <td>{{ $no++ }}</td>
-                                <td>{{ $p['name'] }}</td>
-                                <td>{{ $p['description'] }}</td>
-                                <td>
-                                    <img src='{{ asset('storage/images/') . '/' . $p['image'] }}' alt='' width='300px;'>
-                                </td>
-                                <td>{{ $p['created_at'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-
-                </table>
-
-            </div>
-        </div>
-
     </div>
 @endsection
 
@@ -211,7 +126,5 @@
 
     <script>
         new DataTable('#tabledatapoints');
-        new DataTable('#tabledatapolylines');
-        new DataTable('#tabledatapolygons');
     </script>
 @endsection
