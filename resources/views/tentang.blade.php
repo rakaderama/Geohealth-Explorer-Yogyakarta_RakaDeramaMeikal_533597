@@ -1,5 +1,11 @@
 @extends('layouts.template')
 
+@section('page_title', 'Tentang Aplikasi')
+@section('page_subtitle', 'Informasi singkat dan fitur aplikasi GeoHealth Explorer')
+@section('hero_image')
+    <img src="https://source.unsplash.com/600x400/?healthcare,hospital,doctors" alt="Tentang hero">
+@endsection
+
 @section('styles')
     <style>
         .about-hero {

@@ -1,5 +1,11 @@
 @extends('layouts.template')
 
+@section('page_title', 'Edit Data Titik')
+@section('page_subtitle', 'Ubah informasi dan geometri titik fasilitas kesehatan')
+@section('hero_image')
+    <img src="https://source.unsplash.com/600x400/?clinic,doctors,medical" alt="Edit point hero">
+@endsection
+
 @section('styles')
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -17,9 +23,9 @@
             font-family: Arial, sans-serif;
         }
 
-        /* Map height = full screen - navbar */
+        /* Map height = full screen - header (uses CSS var defined in layout) */
         #map {
-            height: calc(100vh - 60px);
+            height: calc(100vh - var(--header-height));
             width: 100%;
         }
     </style>

@@ -1,382 +1,436 @@
 @extends('layouts.template')
 
+@section('page_title', 'Peta Fasilitas Kesehatan')
+@section('page_subtitle', 'Temukan rumah sakit dan fasilitas kesehatan di Kota Yogyakarta')
+@section('hero_image')
+    <img src="https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?q=80&w=600&auto=format&fit=crop" alt="Map hero">
+@endsection
+
 @section('styles')
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <!-- Leaflet Draw CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
-
-    <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {{-- Sinkronisasi Google Fonts tema Faskes --}}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
+            letter-spacing: -0.01em;
         }
 
-        /* Map height = full screen - navbar */
-        #map {
-            height: calc(100vh - 60px);
-            width: 100%;
+        h1, h2, h3, h4, h5, h6, .popup-title, .faskes-item-card h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        /* Popup card styles */
-        .popup-card { display: flex; gap: 12px; align-items: flex-start; }
-        .popup-image { width: 120px; height: 84px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-        .popup-body { flex: 1; min-width: 0; }
-        .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-        .popup-desc { color: #6c757d; font-size: 0.875rem; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-        .popup-meta { font-size: 0.78rem; color: #868e96; }
-        .popup-actions { margin-top: 8px; display: flex; gap: 8px; }
-        .leaflet-popup-content .btn { font-size: .78rem; padding: .25rem .5rem; }
-        /* High-visibility marker styles */
-        .marker-circle { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg,#ff7a59 0%,#ff4d4f 100%); color: #fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow: 0 6px 14px rgba(0,0,0,0.28); border: 3px solid rgba(255,255,255,0.85); }
-        .marker-circle i { line-height: 1; }
-        /* Search control styles */
-        .custom-search { background: #fff; padding: 6px; border-radius: 8px; min-width: 280px; }
-        .custom-search .search-input { width: 100%; padding: 6px 8px; border: 1px solid #e6e9ef; border-radius: 6px; outline: none; }
-        .custom-search .search-suggestions { position: absolute; top: 46px; left: 6px; right: 6px; background: #fff; border: 1px solid #e6e9ef; box-shadow: 0 6px 18px rgba(16,24,40,0.08); max-height: 300px; overflow-y: auto; z-index: 1000; display: none; border-radius: 6px; }
-        .custom-search .suggestion-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
-        .custom-search .suggestion-item:hover, .custom-search .suggestion-item.active { background: #f1f7ff; }
+
+        /* Full Height Split Screen Layout */
+        .dashboard-container {
+            display: flex;
+            height: calc(100vh - var(--header-height, 64px));
+            width: 100%;
+            position: relative;
+        }
+
+        /* Left Panel - Sidebar List & Stats */
+        .sidebar-panel {
+            width: 420px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            box-shadow: 4px 0 24px rgba(15, 23, 42, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 24px;
+        }
+
+        /* Faskes Card Item in Sidebar */
+        .faskes-item-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            gap: 12px;
+        }
+
+        .faskes-item-card:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 10px 15px -3px rgba(13, 110, 253, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .faskes-thumb {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #f1f5f9;
+        }
+
+        /* Right Panel - Map Full Width */
+        .map-panel {
+            flex: 1;
+            position: relative;
+            height: 100%;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Modernized Leaflet UI */
+        .leaflet-bar {
+            border: none !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border-radius: 10px !important;
+            overflow: hidden;
+        }
+
+        .leaflet-bar a {
+            border-bottom: 1px solid #f1f5f9 !important;
+            color: #475569 !important;
+        }
+
+        /* Premium Glassmorphism Marker Base */
+        .marker-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            border: 3px solid #ffffff;
+            transition: transform 0.2s ease;
+        }
+
+        /* Pembeda Warna Marker */
+        .marker-rs {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            box-shadow: 0 8px 16px rgba(13, 110, 253, 0.3);
+        }
+        .marker-pkm {
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            box-shadow: 0 8px 16px rgba(25, 135, 84, 0.3);
+        }
+
+        /* Modern Map Popup Card */
+        .leaflet-popup-content-wrapper {
+            border-radius: 16px !important;
+            padding: 0 !important;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15) !important;
+        }
+        .leaflet-popup-content { margin: 0 !important; width: 300px !important; }
+        .popup-card { display: flex; flex-direction: column; }
+        .popup-image { width: 100%; height: 140px; object-fit: cover; }
+        .popup-body { padding: 16px; }
+        .popup-title { font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 4px; letter-spacing: -0.01em; }
+        .popup-desc { color: #64748b; font-size: 0.85rem; margin-bottom: 12px; line-height: 1.4; }
+        .popup-actions { display: flex; gap: 8px; }
+        .popup-actions .btn { flex: 1; padding: 6px 10px; font-size: 0.8rem; border-radius: 8px; font-weight: 600; }
+
+        /* Modal Custom Style */
+        .modal-content { border-radius: 20px; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .form-control, .form-select { border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15); border-color: #0d6efd; }
+
+        /* Responsive Mobile Drawer */
+        @media (max-width: 768px) {
+            .dashboard-container { flex-direction: column-reverse; }
+            .sidebar-panel { width: 100%; height: 40vh; }
+            .map-panel { height: 60vh; }
+        }
     </style>
 @endsection
 
 @section('content')
-    <div id="map"></div>
+<div class="dashboard-container">
 
-    {{-- Modal form Input Point --}}
-    <div class="modal" tabindex="-1" id="modalInputPoint">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Input Point</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="sidebar-panel">
+        <div class="sidebar-header">
+            <h4 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Eksplorasi Faskes</h4>
+            <p class="text-muted small mb-3">Gunakan alat digitasi di peta untuk menambah titik baru.</p>
+
+            <div class="input-group border rounded-3 p-1 bg-light">
+                <span class="input-group-text bg-transparent border-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="searchFaskes" class="form-control border-0 bg-transparent" placeholder="Cari rumah sakit atau klinik...">
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="text-muted d-block small fw-medium">Total Terdata</span>
+                    <span class="fs-4 fw-bold text-primary" id="totalFaskes">0</span>
                 </div>
-                <form action="{{ route('points.store') }}" method="post" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" name="name"
-                                placeholder="Fill name here...">
-                        </div>
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="geometry_point" class="form-label">Geometry</label>
-                            <textarea class="form-control" id="geometry_point" name="geometry_point" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Image</label>
-                            <input class="form-control" type="file" id="image" name="image"
-                                onchange="document.getElementById('preview-image').src = window.URL.createObjectURL(this.files[0])"
-                                rows="3">
+                <div class="stat-card">
+                    <span class="text-muted d-block small fw-medium">Kota</span>
+                    <span class="fs-6 fw-bold text-dark">Yogyakarta</span>
+                </div>
+            </div>
+        </div>
 
-                        </div>
-                        <div class="mb-3">
-                            <img src="" alt="" id="preview-image" class="img-thumbnail"
-                                width="400">
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
+        <div class="list-container" id="faskesList">
+            <div class="text-center py-5 text-muted small" id="loadingList">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <p>Memuat data fasilitas kesehatan...</p>
             </div>
         </div>
     </div>
+
+    <div class="map-panel">
+        <div id="map"></div>
+    </div>
+
+</div>
+
+{{-- Modal Form Input Point Modern --}}
+<div class="modal fade" tabindex="-1" id="modalInputPoint" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header px-4 pt-4 border-0">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-primary"></i> Tambah Titik Faskes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('points.store') }}" method="post" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body px-4">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Fasilitas Kesehatan</label>
+                        <input type="text" class="form-control" name="name" required placeholder="Contoh: RSUD Kota Yogyakarta">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Fasilitas Kesehatan</label>
+                        <select class="form-select" name="type" required>
+                            <option value="" disabled selected>-- Pilih Jenis Faskes --</option>
+                            <option value="rumah_sakit">Rumah Sakit</option>
+                            <option value="puskesmas">Puskesmas</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Deskripsi & Layanan</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Tulis rincian fasilitas atau info operasional..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Geometris (WKT)</label>
+                        <input type="text" class="form-control bg-light" id="geometry_point" name="geometry_point" readonly style="font-family: monospace; font-size: 0.85rem;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Foto / Gambar Lokasi</label>
+                        <input class="form-control" type="file" id="imageInput" name="image" accept="image/*"
+                            onchange="document.getElementById('previewImg').src = window.URL.createObjectURL(this.files[0]); document.getElementById('previewWrapper').classList.remove('d-none')">
+                    </div>
+                    <div class="mb-2 d-none" id="previewWrapper">
+                        <img src="" id="previewImg" class="w-100 rounded-3 border" style="max-height: 160px; object-fit: cover;">
+                    </div>
+                </div>
+                <div class="modal-footer px-4 pb-4 border-0 gap-2">
+                    <button type="button" class="btn btn-light px-4 rounded-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4 rounded-3">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet Draw JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <!-- Terraformer -->
     <script src="https://unpkg.com/@terraformer/wkt"></script>
-    <!-- JQUERY -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-    <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster-src.js"></script>
 
     <script>
-        // Inisialisasi peta
-        var map = L.map('map').setView([-7.8000, 110.3755], 14);
+        // Inisialisasi Peta & Matikan Zoom bawaan agar UI bersih
+        var map = L.map('map', { zoomControl: false }).setView([-7.8000, 110.3755], 14);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Basemap OSM
-        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-        /* Digitize Function */
+        /* Fitur Digitasi */
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
-
         var drawControl = new L.Control.Draw({
-            draw: {
-                position: 'topleft',
-                marker: true,
-            },
+            draw: { position: 'topright', marker: true, polyline: false, polygon: false, circle: false, rectangle: false, circlemarker: false },
             edit: false
         });
-
         map.addControl(drawControl);
 
         map.on('draw:created', function(e) {
-            var type = e.layerType,
-                layer = e.layer;
+            var layer = e.layer;
+            var objectGeometry = Terraformer.geojsonToWKT(layer.toGeoJSON().geometry);
 
-            console.log(type);
+            $('#geometry_point').val(objectGeometry);
+            var modal = new bootstrap.Modal(document.getElementById('modalInputPoint'));
+            modal.show();
 
-            var drawnJSONObject = layer.toGeoJSON();
-            var objectGeometry = Terraformer.geojsonToWKT(drawnJSONObject.geometry);
-
-            console.log(drawnJSONObject);
-            console.log(objectGeometry);
-
-
-            if (type === 'marker') {
-                // set value geometry to geometry_input textarea
-                $('#geometry_point').val(objectGeometry);
-
-                // show modal input point (Bootstrap 5)
-                var modalEl = document.getElementById('modalInputPoint');
-                var modal = new bootstrap.Modal(modalEl);
-                modal.show();
-
-                // modal dismiss reload page
-                modalEl.addEventListener('hidden.bs.modal', function() {
-                    location.reload();
-                });
-            } else {
-                console.log('undefined');
-            }
-
+            document.getElementById('modalInputPoint').addEventListener('hidden.bs.modal', function() {
+                location.reload();
+            });
             drawnItems.addLayer(layer);
         });
 
-        // Layer control contoh
-        var satellite = L.tileLayer(
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        );
-
-        var baseMaps = {
-            "OpenStreetMap": osm,
-            "Satellite": satellite
-        };
-
-        // Marker cluster group
+        /* Setup Marker & Cluster Groups */
         var markers = L.markerClusterGroup();
-        // map of point id -> marker layer for quick lookup
         var markerById = {};
+        var allFeatures = [];
 
-        // custom hospital DivIcon (high visibility)
-        var hospitalDivIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: '<div class="marker-circle"><i class="fa-solid fa-hospital"></i></div>',
-            iconSize: [44, 44],
-            iconAnchor: [22, 44],
-            popupAnchor: [0, -44]
-        });
-
+        // Request GeoJSON dan Render Objek ke dalam Peta
         $.getJSON("{{ route('geojson.points') }}", function(data) {
+            $('#loadingList').remove();
+
+            if(data && data.features) {
+                allFeatures = data.features;
+                $('#totalFaskes').text(allFeatures.length);
+                renderSidebarList(allFeatures);
+            }
+
             var geojsonLayer = L.geoJSON(data, {
                 pointToLayer: function(feature, latlng) {
-                    return L.marker(latlng, { icon: hospitalDivIcon });
+                    // Deteksi jenis data secara dinamis berdasarkan nama (atau kolom type jika ada)
+                    var isPuskesmas = feature.properties.name.toLowerCase().includes('puskesmas') ||
+                                      feature.properties.name.toLowerCase().includes('pkm');
+
+                    // Membuat struktur divIcon dengan warna kelas CSS yang berbeda
+                    var customIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: isPuskesmas
+                            ? '<div class="marker-circle marker-pkm"><i class="fa-solid fa-house-medical"></i></div>'
+                            : '<div class="marker-circle marker-rs"><i class="fa-solid fa-hospital-user"></i></div>',
+                        iconSize: [44, 44],
+                        iconAnchor: [22, 44],
+                        popupAnchor: [0, -44]
+                    });
+
+                    return L.marker(latlng, { icon: customIcon });
                 },
                 onEachFeature: function(feature, layer) {
-                    var routedelete = "{{ route('points.delete', ':id') }}";
-                    routedelete = routedelete.replace(':id', feature.properties.id);
+                    var routedelete = "{{ route('points.delete', ':id') }}".replace(':id', feature.properties.id);
+                    var routeedit = "{{ route('points.edit', ':id') }}".replace(':id', feature.properties.id);
+                    var imageSrc = feature.properties.image ? "{{ asset('storage/images') }}/" + feature.properties.image : 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=400&auto=format&fit=crop';
 
-                    var routeedit = "{{ route('points.edit', ':id') }}";
-                    routeedit = routeedit.replace(':id', feature.properties.id);
+                    var popup_content = `
+                        <div class="popup-card">
+                            <img src="${imageSrc}" class="popup-image"/>
+                            <div class="popup-body">
+                                <div class="popup-title">${feature.properties.name}</div>
+                                <div class="popup-desc">${feature.properties.description || 'Tidak ada deskripsi.'}</div>
+                                <div class="popup-actions">
+                                    <a href="${routeedit}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                                    <form action="${routedelete}" method="post" style="flex:1" onsubmit="return confirm('Hapus data ini?')">
+                                        @csrf @method('delete')
+                                        <button type="submit" class="btn btn-sm btn-danger w-100"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>`;
 
-                    var imageSrc = feature.properties.image ? "{{ asset('storage/images') }}/" + feature.properties.image : 'https://via.placeholder.com/320x180?text=No+Image';
-
-                    var popup_content = '' +
-                        '<div class="popup-card" style="max-width:360px">' +
-                            '<img src="' + imageSrc + '" alt="' + feature.properties.name + '" class="popup-image"/>' +
-                            '<div class="popup-body">' +
-                                '<div class="popup-title">' + feature.properties.name + '</div>' +
-                                '<div class="popup-desc">' + (feature.properties.description || '') + '</div>' +
-                                '<div class="popup-meta">Dibuat: ' + (feature.properties.created_at || '') + '</div>' +
-                                '<div class="popup-actions">' +
-                                    '<a href="' + routeedit + '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen-to-square me-1"></i> Edit</a>' +
-                                    '<form action="' + routedelete + '" method="post" style="display:inline">' +
-                                        '@csrf' +
-                                        '@method('delete')' +
-                                        '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Apakah Anda yakin ingin menghapus data point ini?\')"><i class="fa-solid fa-trash-can me-1"></i> Hapus</button>' +
-                                    '</form>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>';
-
-                    layer.bindPopup(popup_content, { maxWidth: 360 });
-                    // store marker reference by its id
-                    if (feature && feature.properties && feature.properties.id) {
-                        markerById[feature.properties.id] = layer;
-                    }
+                    layer.bindPopup(popup_content);
+                    markerById[feature.properties.id] = layer;
                 }
             });
 
             markers.addLayer(geojsonLayer);
             map.addLayer(markers);
-            // Build a lightweight index of points for search (id, name, latlng)
-            var pointsList = [];
-            if (data && data.features && data.features.length) {
-                data.features.forEach(function(f) {
-                    var id = f.properties && f.properties.id ? f.properties.id : null;
-                    var name = f.properties && f.properties.name ? f.properties.name : '';
-                    var latlng = null;
-                    if (f.geometry && Array.isArray(f.geometry.coordinates)) {
-                        latlng = L.latLng(f.geometry.coordinates[1], f.geometry.coordinates[0]);
-                    }
-                    pointsList.push({ id: id, name: name, latlng: latlng });
+
+            /* Fokus otomatis dari halaman Tabel Data */
+            const urlParams = new URLSearchParams(window.location.search);
+            const focusId = urlParams.get('focus');
+
+            if (focusId && markerById[focusId]) {
+                var targetMarker = markerById[focusId];
+                markers.zoomToShowLayer(targetMarker, function() {
+                    map.setView(targetMarker.getLatLng(), 17, { animate: true, duration: 1.2 });
+                    setTimeout(function() {
+                        targetMarker.openPopup();
+                    }, 350);
                 });
-                pointsList.sort(function(a,b){ return a.name.localeCompare(b.name); });
             }
-
-            // If URL contains ?focus=<id>, zoom to that marker and open its popup
-            (function() {
-                try {
-                    var params = new URLSearchParams(window.location.search);
-                    var focusId = params.get('focus');
-                    if (focusId) {
-                        var m = markerById[focusId];
-                        if (m) {
-                            markers.zoomToShowLayer(m, function() {
-                                map.setView(m.getLatLng(), 18);
-                                var opened = false;
-                                function openPopupOnce() {
-                                    if (opened) return;
-                                    opened = true;
-                                    m.openPopup();
-                                    // remove focus param so reload/back doesn't re-trigger focus
-                                    params.delete('focus');
-                                    var newSearch = params.toString();
-                                    var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
-                                    history.replaceState(null, '', newUrl);
-                                }
-                                map.once('moveend', openPopupOnce);
-                                setTimeout(openPopupOnce, 500);
-                            });
-                        } else {
-                            // focus id not found in markers; remove param anyway
-                            params.delete('focus');
-                            var newSearch = params.toString();
-                            var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
-                            history.replaceState(null, '', newUrl);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error parsing focus param', e);
-                }
-            })();
-
-            // Search UI lives in the navbar now (input#point-search and #search-suggestions)
-
-            // Helpers for suggestions
-            function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"]/, function(s){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[s]; }); }
-
-            var inputEl = document.getElementById('point-search');
-            var sugEl = document.getElementById('search-suggestions');
-            var selectedIndex = -1;
-
-            function clearSuggestions(){ sugEl.style.display = 'none'; sugEl.innerHTML = ''; selectedIndex = -1; }
-
-            function renderSuggestions(items){
-                if(!items || !items.length){ clearSuggestions(); return; }
-                sugEl.innerHTML = items.map(function(it, idx){
-                    return '<div class="suggestion-item" data-id="'+it.id+'" data-index="'+idx+'">'+escapeHtml(it.name)+'</div>';
-                }).join('');
-                sugEl.style.display = 'block';
-                selectedIndex = -1;
-            }
-
-            function focusPointById(id){
-                if(!id) return;
-                var m = markerById[id];
-                if(m){
-                    markers.zoomToShowLayer(m, function(){
-                        map.setView(m.getLatLng(), 18);
-                        var opened = false;
-                        function openPopupOnce() {
-                            if (opened) return;
-                            opened = true;
-                            m.openPopup();
-                        }
-                        map.once('moveend', openPopupOnce);
-                        setTimeout(openPopupOnce, 500);
-                    });
-                    return;
-                }
-                // fallback: pan to latlng from index
-                var p = pointsList.find(function(x){ return String(x.id) === String(id); });
-                if(p && p.latlng){ map.setView(p.latlng, 18); }
-            }
-
-            function debounce(fn, delay){ var t; return function(){ var args = arguments; clearTimeout(t); t = setTimeout(function(){ fn.apply(null, args); }, delay); }; }
-
-            var doSearch = debounce(function(){
-                var q = inputEl.value.trim().toLowerCase();
-                if(!q){ clearSuggestions(); return; }
-                var results = pointsList.filter(function(p){ return p.name && p.name.toLowerCase().indexOf(q) !== -1; });
-                results.sort(function(a,b){ return a.name.localeCompare(b.name); });
-                results = results.slice(0, 12);
-                renderSuggestions(results);
-            }, 120);
-
-            inputEl.addEventListener('input', doSearch);
-
-            // click on suggestion
-            sugEl.addEventListener('click', function(e){
-                var it = e.target.closest('.suggestion-item');
-                if(!it) return;
-                var id = it.getAttribute('data-id');
-                focusPointById(id);
-                clearSuggestions();
-                inputEl.value = it.textContent;
-            });
-
-            // keyboard navigation
-            inputEl.addEventListener('keydown', function(e){
-                var items = sugEl.querySelectorAll('.suggestion-item');
-                if(e.key === 'ArrowDown'){
-                    e.preventDefault(); if(selectedIndex < items.length - 1) selectedIndex++; else selectedIndex = 0;
-                    items.forEach(function(it,i){ it.classList.toggle('active', i===selectedIndex); });
-                } else if(e.key === 'ArrowUp'){
-                    e.preventDefault(); if(selectedIndex > 0) selectedIndex--; else selectedIndex = items.length - 1;
-                    items.forEach(function(it,i){ it.classList.toggle('active', i===selectedIndex); });
-                } else if(e.key === 'Enter'){
-                    e.preventDefault(); if(selectedIndex >= 0 && items[selectedIndex]){ focusPointById(items[selectedIndex].getAttribute('data-id')); clearSuggestions(); }
-                    else { var first = sugEl.querySelector('.suggestion-item'); if(first){ focusPointById(first.getAttribute('data-id')); clearSuggestions(); } }
-                } else if(e.key === 'Escape'){
-                    clearSuggestions();
-                }
-            });
-
-            // close when clicking outside
-            document.addEventListener('click', function(ev){ if(!ev.target.closest('.custom-search')) clearSuggestions(); });
         });
 
+        // Fungsi menampilkan list faskes ke sidebar kiri
+        function renderSidebarList(features) {
+            var listHtml = '';
+            if(features.length === 0) {
+                $('#faskesList').html('<p class="text-center text-muted py-4 small">Fasilitas kesehatan tidak ditemukan.</p>');
+                return;
+            }
 
-        var overlayMaps = {
-            "Rumah Sakit": markers
+            features.forEach(function(f) {
+                var img = f.properties.image ? "{{ asset('storage/images') }}/" + f.properties.image : 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=200&auto=format&fit=crop';
+                listHtml += `
+                    <div class="faskes-item-card" onclick="focusToMarker('${f.properties.id}')">
+                        <img src="${img}" class="faskes-thumb">
+                        <div style="flex:1; min-width:0;">
+                            <h6 class="fw-bold text-dark text-truncate mb-1">${f.properties.name}</h6>
+                            <p class="text-muted small mb-0 text-truncate-2" style="font-size:0.8rem; line-height:1.4;">${f.properties.description || 'Tidak ada deskripsi.'}</p>
+                        </div>
+                    </div>`;
+            });
+            $('#faskesList').html(listHtml);
+        }
+
+        // Fungsi interaksi klik list sidebar otomatis zoom ke marker peta
+        window.focusToMarker = function(id) {
+            var marker = markerById[id];
+            if (marker) {
+                markers.zoomToShowLayer(marker, function() {
+                    map.setView(marker.getLatLng(), 17, { animate: true, duration: 0.8 });
+                    setTimeout(function() { marker.openPopup(); }, 300);
+                });
+            }
         };
 
-        var controllayer = L.control.layers(baseMaps, overlayMaps);
-        controllayer.addTo(map);
+        // Pencarian Realtime lokal di sidebar
+        $('#searchFaskes').on('input', function() {
+            var val = $(this).val().toLowerCase();
+            var filtered = allFeatures.filter(function(f) {
+                return f.properties.name.toLowerCase().includes(val) ||
+                       (f.properties.description && f.properties.description.toLowerCase().includes(val));
+            });
+            renderSidebarList(filtered);
+        });
+
+        var baseMaps = { "Peta Jalan": osm, "Satelit": satellite };
+        L.control.layers(baseMaps, { "Fasilitas Kesehatan": markers }, { position: 'bottomleft' }).addTo(map);
     </script>
 @endsection

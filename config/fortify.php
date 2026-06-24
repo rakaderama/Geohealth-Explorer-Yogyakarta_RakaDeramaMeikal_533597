@@ -73,7 +73,8 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    // Redirect users after successful authentication to the map page
+    'home' => '/peta',
 
     /*
     |--------------------------------------------------------------------------
